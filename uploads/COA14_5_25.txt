@@ -1,0 +1,317 @@
+.MODEL SMALL
+.STACK 100H
+.DATA
+.CODE
+MAIN PROC
+    MOV CH,1
+    MOV BL,0 
+  
+
+FOR:
+    CMP CH,10
+    JGE EXIT
+   
+   
+    ADD BL,CH
+    MOV AH,2
+    MOV DL,CH
+    ADD DL,30H
+    INT 21H
+   
+   
+    INC CH 
+    INC CH
+    INC CH
+    INC CH
+    LOOP FOR
+
+
+
+
+
+
+EXIT: 
+
+    MOV AH,2
+    MOV DL,BL
+    INT 21H
+    MOV AH, 4CH
+    INT 21H
+
+MAIN ENDP
+END MAIN
+
+
+
+
+===============================================================
+===============================================================
+===============================================================
+
+.MODEL SMALL
+.STACK 100H
+.DATA
+    
+    MSG     DB  'INPUT : $'
+    MSG1    DB  'OUTPUT : $'
+    
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    MOV AH, 9
+    LEA DX, MSG
+    INT 21H 
+        
+    MOV CX,3
+    MOV BX,0 
+    
+INPUT:
+    MOV AH, 1
+    INT 21H  
+    
+    CMP AL,13
+    JE OUTPUT
+    
+    SUB AL,48 
+    SHL BL,1
+    OR BL,AL 
+    LOOP INPUT
+    
+    
+OUTPUT:
+
+    MOV AH,2
+    MOV DL,9
+    INT 21H
+    
+    
+   
+
+EXIT:
+    MOV AH, 4CH
+    INT 21H
+
+MAIN ENDP
+END MAIN
+
+
+====================================================================================
+====================================================================================
+=========================BINARY TO BINARY 16 BITS===================================
+.MODEL SMALL
+.STACK 100H
+.DATA
+    
+    MSG     DB  'INPUT : $'
+    MSG1    DB  0AH,0DH,'OUTPUT : $'
+    
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    MOV AH, 9
+    LEA DX, MSG
+    INT 21H 
+        
+    MOV CX,16
+    MOV BX,0 
+    
+INPUT:
+    MOV AH, 1
+    INT 21H  
+    
+    CMP AL,13
+    JE OUTPUT
+    
+    SUB AL,48 
+    SHL BX,1
+    OR BL,AL 
+    LOOP INPUT
+    
+    LEA DX,MSG1
+    MOV AH,9
+    INT 21H 
+    MOV CX,16
+OUTPUT:
+    SHL BX,1
+    JNC ZERO
+    MOV DL,49
+    MOV AH,2
+    INT 21H 
+    JMP OUTPUT_1    
+      
+ZERO:
+    MOV DL,48
+    MOV AH,2
+    INT 21H
+    
+OUTPUT_1:
+    LOOP OUTPUT 
+    
+
+    
+
+   
+    
+    
+   
+
+EXIT:
+    MOV AH, 4CH
+    INT 21H
+
+MAIN ENDP
+END MAIN
+
+====================================================================================
+====================================================================================
+==============================HEXA TO BINARY========================================
+
+
+.MODEL SMALL
+.STACK 100H
+.DATA
+    MSG     DB  'INPUT : $'
+    MSG1    DB  0AH,0DH,'OUTPUT : $'
+
+.CODE
+MAIN PROC
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; Display "INPUT :"
+    MOV AH, 9
+    LEA DX, MSG
+    INT 21H
+
+    ; Initialize loop for 4 hex digits
+    MOV CX, 4
+    MOV BX, 0          ; BX will hold the binary number
+
+INPUT:
+    MOV AH, 1          ; Read character
+    INT 21H
+
+    CMP AL, 13         ; If Enter, skip input (safety)
+    JE OUTPUT
+
+    CMP AL, 'A'       ; Check if character is letter
+    JGE LETTER
+
+    ; Convert ASCII '0'–'9'
+    SUB AL, 30H
+    JMP SHIFT
+
+LETTER:
+    ; Convert ASCII 'A'–'F' to 10–15
+    SUB AL, 37H        ; 'A' = 65 ? 65 - 37 = 10
+
+SHIFT:
+    SHL BX, 4          ; Make room for next hex digit
+    OR BL, AL          ; Add current digit to BX
+
+    LOOP INPUT
+
+    ; Display "OUTPUT :"
+    LEA DX, MSG1
+    MOV AH, 9
+    INT 21H
+
+    ; Initialize loop for 16 binary digits
+    MOV CX, 16
+
+OUTPUT:
+    SHL BX, 1          ; Shift MSB into Carry
+    JNC ZERO
+
+    ; If Carry=1, print '1'
+    MOV DL, '1'
+    MOV AH, 2
+    INT 21H
+    JMP NEXT
+
+ZERO:
+    ; If Carry=0, print '0'
+    MOV DL, '0'
+    MOV AH, 2
+    INT 21H
+
+NEXT:
+    LOOP OUTPUT
+
+    ; Exit
+    MOV AH, 4CH
+    INT 21H
+
+MAIN ENDP
+END MAIN
+
+
+=============================================================================
+=============================================================================
+==============================HEXA TO HEXA===================================
+
+.MODEL SMALL
+.STACK 100H
+.DATA   
+     MSG DB "INPUT : $"
+     MSG1 DB 0AH,0DH,"OUTPUT : $"
+.CODE
+MAIN PROC 
+        MOV AX, @DATA
+        MOV DS, AX
+        MOV AH,9
+        LEA DX,MSG
+        INT 21H
+        MOV BX,0
+        MOV CX,4  
+        INPUT:  
+        MOV AH,1
+        INT 21H
+        CMP AL,0DH
+        JE OUTPUT 
+        CMP AL,41H
+        JGE LETTER
+        SUB AL,30H  
+        JMP SHIFT
+
+        LETTER:
+        SUB AL,55D  
+        SHIFT:
+        SHL BX,4
+        OR BL,AL
+        LOOP INPUT
+        OUTPUT:
+        MOV AH,9
+        LEA DX,MSG1
+        INT 21H 
+        MOV CX,4
+        MOV AH,2
+        OUTPUT_:
+        MOV DL,BH
+        SHR DL,4
+        SHL BX,4
+        CMP DL,10
+        JGE OUTPUTLETTER 
+        ADD DL,30H  
+        INT 21H
+        JMP OUTPUT_LOOP:
+        OUTPUTLETTER:
+        ADD DL,37H
+        INT 21H
+        OUTPUT_LOOP:
+        LOOP OUTPUT_
+
+    MOV AH,4CH
+    INT 21H  
+    MAIN  ENDP
+END MAIN
+
+======================================================================================
+======================================================================================
+======================================================================================
